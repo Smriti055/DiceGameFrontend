@@ -17,7 +17,7 @@ const RollDice = () => {
   const [autoBetInterval, setAutoBetInterval] = useState(null);
 
   // Place Bet Function
-  const backendUrl = 'https://DiceGame-1.onrender.com'; // Replace with your actual Render backend URL
+  const backendUrl = 'https://dicegame-1-unjx.onrender.com'; // Replace with your actual Render backend URL
 
   const placeBet = async () => {
     
