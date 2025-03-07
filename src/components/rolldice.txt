@@ -1,0 +1,156 @@
+import { useState } from "react";
+import axios from "axios";
+import ControlBet from "./ControlBet";
+import BetButton from "./BetButton";
+import Slide from "./Slide";
+import Roll from "./Roll";
+
+const RollDice = () => {
+  const [betAmount, setBetAmount] = useState(10);
+  const [winChance, setWinChance] = useState(50);
+  const [multiplier, setMultiplier] = useState(2.0);
+  const [roll, setRoll] = useState(null);
+  const [betMode, setBetMode] = useState("manual");
+  const [resultMessage, setResultMessage] = useState("");
+  const [rollOverHistory, setRollOverHistory] = useState([]);
+
+  const placeBet = async () => {
+    try {
+      const response = await axios.post("http://localhost:5000/api/roll-dice", { betAmount });
+      const rollResult = response.data.roll;
+      
+      setRoll(rollResult);
+
+      // Determine Win/Loss
+      if (rollResult >= 4) {
+        setResultMessage("You Win! 🎉");
+      } else {
+        setResultMessage("You Lose! 😞");
+      }
+
+      // Update last 3 roll overs
+      setRollOverHistory(prev => {
+        const newHistory = [winChance, ...prev.slice(0, 2)]; // Keep only last 3
+        return newHistory;
+      });
+
+    } catch (error) {
+      alert("Error placing bet");
+    }
+  };
+
+  return (
+    <div className="flex flex-col h-screen bg-gray-900 text-white">
+      {/* Top Section - Roll Over History */}
+      {/* <div className="flex gap-4 justify-end p-4">
+        {rollOverHistory.map((value, index) => (
+          <div key={index} className="bg-green-500 text-black px-4 py-2 rounded-full font-bold">
+            {value.toFixed(2)}
+          </div>
+        ))}
+      </div> */}
+
+      {/* Main Game Section */}
+      <div className="flex flex-grow">
+        {/* Left Section - Bet Controls */}
+        <div className="w-1/4 bg-gray-800 p-6 flex flex-col items-center fixed left-0 h-screen">
+          <div className="flex gap-8 mb-4 bg-black w-full rounded-3xl p-3">
+            <button 
+              className={`px-4 py-2 ${betMode === "manual" ? "bg-gray-600 rounded-3xl" : "bg-black"}`}
+              onClick={() => setBetMode("manual")}
+            >
+              Manual
+            </button>
+            <button 
+              className={`px-4 py-2 ${betMode === "auto" ? "bg-gray-600 rounded-3xl" : "bg-black"}`}
+              onClick={() => setBetMode("auto")}
+            >
+              Auto
+            </button>
+          </div>
+
+          {/* Bet Amount */}
+          <ControlBet betAmount={betAmount} setBetAmount={setBetAmount} multiplier={multiplier} />
+
+          {/* Bet Button */}
+          <BetButton onBet={placeBet} />
+        </div>
+
+        {/* Right Section - Game Area */}
+        
+        <div className="w-3/4 flex flex-col items-center justify-center p-2 ml-auto mr-0 mt-28">
+          {/* Slider Section */}
+          {/* <div className="flex gap-4 justify-end p-4">
+        {rollOverHistory.map((value, index) => (
+          <div key={index} className="bg-green-500 text-black px-4 py-2 rounded-full font-bold">
+            {value.toFixed(2)}
+          </div>
+        ))}
+      </div> */}
+          <Slide rollOver={winChance} setRollOver={setWinChance} />
+
+          {/* Roll result (Cube animation) */}
+          {roll !== null && <Roll roll={roll} />}
+
+          {/* Win/Loss Message */}
+          {resultMessage && (
+            <div className={`mt-4 text-2xl font-bold ${resultMessage.includes("Win") ? "text-green-500" : "text-red-500"}`}>
+              {resultMessage}
+            </div>
+          )}
+
+          {/* Bottom Section - Controls (Inside Right Side) */}
+          
+          <div className="w-full bg-gray-700 rounded-lg mt-10 flex px-10">
+            <div className="flex  gap-10 w-full px-24">
+              {/* Multiplier */}
+              <div>
+                <span className="text-lg font-semibold">Multiplier</span>
+                <div className="bg-black flex justify-between w-52 p-2 rounded-lg">
+                  <input 
+                    type="number" 
+                    value={multiplier} 
+                    onChange={(e) => setMultiplier(parseFloat(e.target.value))} 
+                    className="bg-transparent outline-none text-center text-lg w-28"
+                  />
+                  <button className="mr-2 font-bold">X</button>
+                </div>
+              </div>
+
+              {/* Roll Over */}
+              <div>
+                <span className="text-lg font-semibold">Roll Over</span>
+                <div className="bg-black flex justify-between w-52 p-2 rounded-lg">
+                  <input 
+                    type="number" 
+                    value={winChance} 
+                    onChange={(e) => setWinChance(parseFloat(e.target.value))} 
+                    className="bg-transparent outline-none text-center text-lg w-32"
+                  />
+                  <button className="font-bold mr-3">🔄</button>
+                </div>
+              </div>
+
+              {/* Win Chance */}
+              <div>
+                <span className="text-lg font-semibold">Win Chance</span>
+                <div className="bg-black flex justify-between w-52 p-2 rounded-lg">
+                  <input 
+                    type="number" 
+                    value={(100 - winChance).toFixed(2)} 
+                    disabled 
+                    className="bg-transparent outline-none text-center text-lg w-28"
+                  />
+                  <button className="font-bold mr-3">%</button>
+                </div>
+              </div>
+            </div>
+          </div>
+
+        </div>
+      </div>
+    </div>
+  );
+};
+
+export default RollDice;
